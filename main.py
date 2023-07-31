@@ -5,6 +5,7 @@ from geopy import Nominatim
 token = '1652159514:AAHGAXOo4woxDDdsW3lT6Cf4JSPVACv-XOo'
 bot = telebot.TeleBot(token)
 geolocator = Nominatim(user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36')
+users = {}
 
 @bot.message_handler(commands=['start'])
 def start_message(message):
@@ -36,6 +37,30 @@ def get_num(message, user_name):
         bot.send_message(user_id, 'Send your contact via button')
         bot.register_next_step_handler(message, get_num, user_name)
 
+@bot.callback_query_handler(lambda call: call.data in ['back', 'to_cart', 'increment', 'decrement'])
+def get_user_count(call):
+    chat_id = call.message.chat.id
+    if call.data == 'increment':
+        count = users[chat_id]['quantity']
+        users[chat_id]['quantity'] += 1
+        bot.edit_message_reply_markup(chat_id=chat_id, message_id=call.message.message_id, reply_markup=buttons.choose_product_count(count, 'increment'))
+    elif call.data == 'decrement':
+        count = users[chat_id]['quantity']
+        users[chat_id]['quantity'] -= 1
+        bot.edit_message_reply_markup(chat_id=chat_id, message_id=call.message.message_id, reply_markup=buttons.choose_product_count(count, 'decrement'))
+    elif call.data == 'back':
+        products = database.get_pr_name_id()
+        bot.edit_message_text('Select Menu', chat_id=chat_id, message_id=call.message.message_id, reply_markup=buttons.main_menu_buttons(products))
+    elif call.data == 'to_cart':
+        products = database.get_pr_name_id()
+        product_count = users[chat_id]['quantity']
+        user_product = users[chat_id]['name']
+        total = product_count * products[3]
+        database.add_to_cart(chat_id, user_product, product_count, total)
+
+        bot.edit_message_text('Added to cart',chat_id=chat_id, message_id=call.message.message_id, reply_markup=buttons.main_menu_buttons(products))
+
+
 def get_location(message, user_name, user_num):
     if message.location:
         user_loc = geolocator.reverse(f'{message.location.longitude},{message.location.latitude}')
@@ -43,9 +68,23 @@ def get_location(message, user_name, user_num):
         bot.send_message(user_id, 'Registered successfully')
         products = database.get_pr_id()
         bot.send_message(user_id, 'Select menu', reply_markup=buttons.main_menu_buttons(products))
+
     else:
         bot.send_message(user_id, 'Send location via button')
         bot.register_next_step_handler(message, get_location, user_name, user_num)
 
 
+#count function
+@bot.callback_query_handler(lambda call: int(call.data) in database.get_pr_id())
+def get_user_product(call):
+    chat_id = call.message.chat.id
+    users[chat_id] = {'name': call.data, 'quantity': 1}
+    message_id = call.message.message_id
+
+    bot.edit_message_text('Enter quantity', chat_id=chat_id, message_id=message_id, reply_markup=buttons.choose_product_count())
+
+
+
 bot.polling(none_stop=True)
+
+

@@ -52,14 +52,14 @@ def show_all_products():
     return all_products.fetchall()
 
 def get_pr_name_id():
-    products = sql.execute('SELECT id, name, quantity FROM products;')
+    products = sql.execute('SELECT id, name, quantity, price FROM products;')
 
     return products.fetchall()
 
 
 def get_pr_id():
     prods = sql.execute('SELECT name, id, quantity FROM products;').fetchall()
-    sorted_prods = [i[0] for i in prods if i[2]>0]
+    sorted_prods = [i[1] for i in prods if i[2]>0]
 
     return sorted_prods
 
