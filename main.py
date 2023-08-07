@@ -54,11 +54,32 @@ def get_user_count(call):
     elif call.data == 'to_cart':
         products = database.get_pr_name_id()
         product_count = users[chat_id]['quantity']
-        user_product = users[chat_id]['name']
-        total = product_count * products[3]
-        database.add_to_cart(chat_id, user_product, product_count, total)
+        user_product = database.get_pr_name(users[chat_id]['name'])
+        total = product_count * products[0][3]
+        database.add_to_cart(chat_id, user_product[0], product_count, total)
 
         bot.edit_message_text('Added to cart',chat_id=chat_id, message_id=call.message.message_id, reply_markup=buttons.main_menu_buttons(products))
+
+
+@bot.callback_query_handler(lambda call: call.data in ['order', 'clear', 'back'])
+def cart_handler(call):
+    chat_id = call.message.chat.id
+    message_id = call.message.message_id
+    products = database.get_pr_name_id()
+
+    if call.data == 'clear':
+        database.del_cart(user_id)
+        bot.edit_message_text('Cleared, do you want anything else?', chat_id=chat_id, message_id=message_id,
+                              reply_markup=buttons.main_menu_buttons(products))
+    elif call.data == 'order':
+        bot.send_message(2176939, 'New Order!')
+        database.del_cart(user_id)
+        bot.edit_message_text('Order was processed! Anything else?', chat_id=chat_id, message_id=message_id,
+                              reply_markup=buttons.main_menu_buttons(products))
+    elif call.data == 'back':
+        bot.edit_message_text('Select Menu', chat_id=chat_id, message_id=call.message.message_id,
+                              reply_markup=buttons.main_menu_buttons(products))
+
 
 
 def get_location(message, user_name, user_num):

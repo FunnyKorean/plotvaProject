@@ -18,7 +18,7 @@ sql.execute('CREATE TABLE IF NOT EXISTS products '
 sql.execute('CREATE TABLE IF NOT EXISTS cart'
             '(id INTEGER,'
             'product TEXT,'
-            'quantity INTEGER'
+            'quantity INTEGER,'
             'total REAL);')
 
 #methods
@@ -63,23 +63,27 @@ def get_pr_id():
 
     return sorted_prods
 
+def get_pr_name(id):
+    product = sql.execute('SELECT name FROM products WHERE id=?;', (id,))
+    return product.fetchone()
 
 #add to cart
 def add_to_cart(user_id, pr_name, pr_quantity, user_total = 0):
     sql.execute('INSERT INTO cart (id, product, quantity, total)'
                 'VALUES (?,?,?,?);', (user_id, pr_name, pr_quantity, user_total))
 
-    amount = sql.execute('SELECT quantity FROM products WHERE name=?;', (pr_name)).fetchone()
-    sql.execute(f'UPDATE products SET quantity={amount[0] - pr_quantity} WHERE name=?;', (pr_name))
+    amount = sql.execute('SELECT quantity FROM products WHERE name=?;', (pr_name,)).fetchone()
+    print(pr_name)
+    sql.execute(f'UPDATE products SET quantity={amount[0] - pr_quantity} WHERE name=?;', (pr_name,))
 
     connection.commit()
 
 
 def del_cart(user_id):
     pr_name = sql.execute('SELECT product FROM cart WHERE user_id=?', (user_id)).fetchone()
-    amount = sql.execute('SELECT quantity FROM products WHERE name=?;', (pr_name)).fetchone()
+    amount = sql.execute('SELECT quantity FROM products WHERE name=?;', (pr_name)).fetchone()[0]
     pr_quantity = sql.execute('SELECT quantity FROM cart WHERE user_id=?;', user_id).fetchone()
-    sql.execute(f'UPDATE products SET quantity={amount[0] + pr_quantity} WHERE name=?;', (pr_name))
+    sql.execute(f'UPDATE products SET quantity={amount + pr_quantity} WHERE name=?;', (pr_name,))
     sql.execute('DELETE FROM cart WHERE id=?;', (user_id,))
     connection.commit()
 

@@ -54,7 +54,7 @@ def cart_buttons():
     kb = types.InlineKeyboardMarkup(row_width=3)
 
     order = types.InlineKeyboardButton(text='Make Order', callback_data='order')
-    clear = types.InlineKeyboardButton(text='Clar', callback_data='clear')
+    clear = types.InlineKeyboardButton(text='Clear', callback_data='clear')
     back = types.InlineKeyboardButton(text='Back', callback_data='back')
 
     kb.add(clear,order,back)
